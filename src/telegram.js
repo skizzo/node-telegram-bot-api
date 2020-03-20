@@ -1,80 +1,79 @@
 // shims
-require('array.prototype.findindex').shim(); // for Node.js v0.x
+require("array.prototype.findindex").shim(); // for Node.js v0.x
 
-const errors = require('./errors');
-const TelegramBotWebHook = require('./telegramWebHook');
-const TelegramBotPolling = require('./telegramPolling');
-const debug = require('debug')('node-telegram-bot-api');
-const EventEmitter = require('eventemitter3');
-const fileType = require('file-type');
-const request = require('request-promise');
-const streamedRequest = require('request');
-const qs = require('querystring');
-const stream = require('stream');
-const mime = require('mime');
-const path = require('path');
-const URL = require('url');
-const fs = require('fs');
-const pump = require('pump');
-const deprecate = require('depd')('node-telegram-bot-api');
-let Promise = require('bluebird');
+const errors = require("./errors");
+const TelegramBotWebHook = require("./telegramWebHook");
+const TelegramBotPolling = require("./telegramPolling");
+const debug = require("debug")("node-telegram-bot-api");
+const EventEmitter = require("eventemitter3");
+const fileType = require("file-type");
+const request = require("request-promise");
+const streamedRequest = require("request");
+const qs = require("querystring");
+const stream = require("stream");
+const mime = require("mime");
+const path = require("path");
+const URL = require("url");
+const fs = require("fs");
+const pump = require("pump");
+const deprecate = require("depd")("node-telegram-bot-api");
+let Promise = require("bluebird");
 
 const _messageTypes = [
-  'text',
-  'animation',
-  'audio',
-  'channel_chat_created',
-  'contact',
-  'delete_chat_photo',
-  'document',
-  'game',
-  'group_chat_created',
-  'invoice',
-  'left_chat_member',
-  'location',
-  'migrate_from_chat_id',
-  'migrate_to_chat_id',
-  'new_chat_members',
-  'new_chat_photo',
-  'new_chat_title',
-  'passport_data',
-  'photo',
-  'pinned_message',
-  'poll',
-  'sticker',
-  'successful_payment',
-  'supergroup_chat_created',
-  'video',
-  'video_note',
-  'voice',
+  "text",
+  "animation",
+  "audio",
+  "channel_chat_created",
+  "contact",
+  "delete_chat_photo",
+  "document",
+  "game",
+  "group_chat_created",
+  "invoice",
+  "left_chat_member",
+  "location",
+  "migrate_from_chat_id",
+  "migrate_to_chat_id",
+  "new_chat_members",
+  "new_chat_photo",
+  "new_chat_title",
+  "passport_data",
+  "photo",
+  "pinned_message",
+  "poll",
+  "sticker",
+  "successful_payment",
+  "supergroup_chat_created",
+  "video",
+  "video_note",
+  "voice"
 ];
 const _deprecatedMessageTypes = [
-  'new_chat_participant', 'left_chat_participant'
+  "new_chat_participant",
+  "left_chat_participant"
 ];
-
 
 if (!process.env.NTBA_FIX_319) {
   // Enable Promise cancellation.
   try {
-    const msg =
-      'Automatic enabling of cancellation of promises is deprecated.\n' +
-      'In the future, you will have to enable it yourself.\n' +
-      'See https://github.com/yagop/node-telegram-bot-api/issues/319.';
-    deprecate(msg);
+    // const msg =
+    //   'Automatic enabling of cancellation of promises is deprecated.\n' +
+    //   'In the future, you will have to enable it yourself.\n' +
+    //   'See https://github.com/yagop/node-telegram-bot-api/issues/319.';
+    // deprecate(msg);
     Promise.config({
-      cancellation: true,
+      cancellation: true
     });
   } catch (ex) {
     /* eslint-disable no-console */
     const msg =
-      'error: Enabling Promise cancellation failed.\n' +
-      '       Temporary fix is to load/require this library as early as possible before using any Promises.';
+      "error: Enabling Promise cancellation failed.\n" +
+      "       Temporary fix is to load/require this library as early as possible before using any Promises.";
     console.error(msg);
     throw ex;
     /* eslint-enable no-console */
   }
 }
-
 
 /**
  * JSON-serialize data. If the provided data is already a String,
@@ -84,12 +83,11 @@ if (!process.env.NTBA_FIX_319) {
  * @return {String}
  */
 function stringify(data) {
-  if (typeof data === 'string') {
+  if (typeof data === "string") {
     return data;
   }
   return JSON.stringify(data);
 }
-
 
 class TelegramBot extends EventEmitter {
   /**
@@ -131,8 +129,13 @@ class TelegramBot extends EventEmitter {
    */
   on(event, listener) {
     if (_deprecatedMessageTypes.indexOf(event) !== -1) {
-      const url = 'https://github.com/yagop/node-telegram-bot-api/blob/master/doc/usage.md#events';
-      deprecate(`Events ${_deprecatedMessageTypes.join(',')} are deprecated. See the updated list of events: ${url}`);
+      const url =
+        "https://github.com/yagop/node-telegram-bot-api/blob/master/doc/usage.md#events";
+      deprecate(
+        `Events ${_deprecatedMessageTypes.join(
+          ","
+        )} are deprecated. See the updated list of events: ${url}`
+      );
     }
     super.on(event, listener);
   }
@@ -187,11 +190,17 @@ class TelegramBot extends EventEmitter {
     super();
     this.token = token;
     this.options = options;
-    this.options.polling = (typeof options.polling === 'undefined') ? false : options.polling;
-    this.options.webHook = (typeof options.webHook === 'undefined') ? false : options.webHook;
-    this.options.baseApiUrl = options.baseApiUrl || 'https://api.telegram.org';
-    this.options.filepath = (typeof options.filepath === 'undefined') ? true : options.filepath;
-    this.options.badRejection = (typeof options.badRejection === 'undefined') ? false : options.badRejection;
+    this.options.polling =
+      typeof options.polling === "undefined" ? false : options.polling;
+    this.options.webHook =
+      typeof options.webHook === "undefined" ? false : options.webHook;
+    this.options.baseApiUrl = options.baseApiUrl || "https://api.telegram.org";
+    this.options.filepath =
+      typeof options.filepath === "undefined" ? true : options.filepath;
+    this.options.badRejection =
+      typeof options.badRejection === "undefined"
+        ? false
+        : options.badRejection;
     this._textRegexpCallbacks = [];
     this._replyListenerId = 0;
     this._replyListeners = [];
@@ -200,14 +209,14 @@ class TelegramBot extends EventEmitter {
 
     if (options.polling) {
       const autoStart = options.polling.autoStart;
-      if (typeof autoStart === 'undefined' || autoStart === true) {
+      if (typeof autoStart === "undefined" || autoStart === true) {
         this.startPolling();
       }
     }
 
     if (options.webHook) {
       const autoOpen = options.webHook.autoOpen;
-      if (typeof autoOpen === 'undefined' || autoOpen === true) {
+      if (typeof autoOpen === "undefined" || autoOpen === true) {
         this.openWebHook();
       }
     }
@@ -233,7 +242,7 @@ class TelegramBot extends EventEmitter {
    */
   _fixReplyMarkup(obj) {
     const replyMarkup = obj.reply_markup;
-    if (replyMarkup && typeof replyMarkup !== 'string') {
+    if (replyMarkup && typeof replyMarkup !== "string") {
       obj.reply_markup = stringify(replyMarkup);
     }
   }
@@ -247,7 +256,9 @@ class TelegramBot extends EventEmitter {
    */
   _request(_path, options = {}) {
     if (!this.token) {
-      return Promise.reject(new errors.FatalError('Telegram Bot Token not provided!'));
+      return Promise.reject(
+        new errors.FatalError("Telegram Bot Token not provided!")
+      );
     }
 
     if (this.options.request) {
@@ -261,27 +272,34 @@ class TelegramBot extends EventEmitter {
       this._fixReplyMarkup(options.qs);
     }
 
-    options.method = 'POST';
+    options.method = "POST";
     options.url = this._buildURL(_path);
     options.simple = false;
     options.resolveWithFullResponse = true;
     options.forever = true;
-    debug('HTTP request: %j', options);
+    debug("HTTP request: %j", options);
     return request(options)
       .then(resp => {
         let data;
         try {
           data = resp.body = JSON.parse(resp.body);
         } catch (err) {
-          throw new errors.ParseError(`Error parsing response: ${resp.body}`, resp);
+          throw new errors.ParseError(
+            `Error parsing response: ${resp.body}`,
+            resp
+          );
         }
 
         if (data.ok) {
           return data.result;
         }
 
-        throw new errors.TelegramError(`${data.error_code} ${data.description}`, resp);
-      }).catch(error => {
+        throw new errors.TelegramError(
+          `${data.error_code} ${data.description}`,
+          resp
+        );
+      })
+      .catch(error => {
         // TODO: why can't we do `error instanceof errors.BaseError`?
         if (error.response) throw error;
         throw new errors.FatalError(error);
@@ -304,9 +322,9 @@ class TelegramBot extends EventEmitter {
    */
   _formatSendData(type, data, fileOptions = {}) {
     const deprecationMessage =
-      'See https://github.com/yagop/node-telegram-bot-api/blob/master/doc/usage.md#sending-files' +
-      ' for more information on how sending files has been improved and' +
-      ' on how to disable this deprecation message altogether.';
+      "See https://github.com/yagop/node-telegram-bot-api/blob/master/doc/usage.md#sending-files" +
+      " for more information on how sending files has been improved and" +
+      " on how to disable this deprecation message altogether.";
     let filedata = data;
     let filename = fileOptions.filename;
     let contentType = fileOptions.contentType;
@@ -322,8 +340,10 @@ class TelegramBot extends EventEmitter {
       }
     } else if (Buffer.isBuffer(data)) {
       if (!filename && !process.env.NTBA_FIX_350) {
-        deprecate(`Buffers will have their filenames default to "filename" instead of "data". ${deprecationMessage}`);
-        filename = 'data';
+        deprecate(
+          `Buffers will have their filenames default to "filename" instead of "data". ${deprecationMessage}`
+        );
+        filename = "data";
       }
       if (!contentType) {
         const filetype = fileType(data);
@@ -334,8 +354,10 @@ class TelegramBot extends EventEmitter {
             filename = `${filename}.${ext}`;
           }
         } else if (!process.env.NTBA_FIX_350) {
-          deprecate(`An error will no longer be thrown if file-type of buffer could not be detected. ${deprecationMessage}`);
-          throw new errors.FatalError('Unsupported Buffer file-type');
+          deprecate(
+            `An error will no longer be thrown if file-type of buffer could not be detected. ${deprecationMessage}`
+          );
+          throw new errors.FatalError("Unsupported Buffer file-type");
         }
       }
     } else if (data) {
@@ -351,25 +373,30 @@ class TelegramBot extends EventEmitter {
       return [null, data];
     }
 
-    filename = filename || 'filename';
+    filename = filename || "filename";
     contentType = contentType || mime.lookup(filename);
     if (process.env.NTBA_FIX_350) {
-      contentType = contentType || 'application/octet-stream';
+      contentType = contentType || "application/octet-stream";
     } else {
-      deprecate(`In the future, content-type of files you send will default to "application/octet-stream". ${deprecationMessage}`);
+      deprecate(
+        `In the future, content-type of files you send will default to "application/octet-stream". ${deprecationMessage}`
+      );
     }
 
     // TODO: Add missing file extension.
 
-    return [{
-      [type]: {
-        value: filedata,
-        options: {
-          filename,
-          contentType,
-        },
+    return [
+      {
+        [type]: {
+          value: filedata,
+          options: {
+            filename,
+            contentType
+          }
+        }
       },
-    }, null];
+      null
+    ];
   }
 
   /**
@@ -381,9 +408,12 @@ class TelegramBot extends EventEmitter {
    */
   startPolling(options = {}) {
     if (this.hasOpenWebHook()) {
-      return Promise.reject(new errors.FatalError('Polling and WebHook are mutually exclusive'));
+      return Promise.reject(
+        new errors.FatalError("Polling and WebHook are mutually exclusive")
+      );
     }
-    options.restart = typeof options.restart === 'undefined' ? true : options.restart;
+    options.restart =
+      typeof options.restart === "undefined" ? true : options.restart;
     if (!this._polling) {
       this._polling = new TelegramBotPolling(this);
     }
@@ -397,7 +427,9 @@ class TelegramBot extends EventEmitter {
    * @deprecated
    */
   initPolling() {
-    deprecate('TelegramBot#initPolling() is deprecated. Use TelegramBot#startPolling() instead.');
+    deprecate(
+      "TelegramBot#initPolling() is deprecated. Use TelegramBot#startPolling() instead."
+    );
     return this.startPolling();
   }
 
@@ -433,7 +465,9 @@ class TelegramBot extends EventEmitter {
    */
   openWebHook() {
     if (this.isPolling()) {
-      return Promise.reject(new errors.FatalError('WebHook and Polling are mutually exclusive'));
+      return Promise.reject(
+        new errors.FatalError("WebHook and Polling are mutually exclusive")
+      );
     }
     if (!this._webHook) {
       this._webHook = new TelegramBotWebHook(this);
@@ -469,7 +503,7 @@ class TelegramBot extends EventEmitter {
    * @see https://core.telegram.org/bots/api#getme
    */
   getMe(form = {}) {
-    return this._request('getMe', { form });
+    return this._request("getMe", { form });
   }
 
   /**
@@ -492,8 +526,10 @@ class TelegramBot extends EventEmitter {
      * consistency of the method signatures throughout the library */
     let cert;
     // Note: 'options' could be an object, if a stream was provided (in place of 'cert')
-    if (typeof options !== 'object' || options instanceof stream.Stream) {
-      deprecate('The method signature setWebHook(url, cert) has been deprecated since v0.25.0');
+    if (typeof options !== "object" || options instanceof stream.Stream) {
+      deprecate(
+        "The method signature setWebHook(url, cert) has been deprecated since v0.25.0"
+      );
       cert = options;
       options = {}; // eslint-disable-line no-param-reassign
     } else {
@@ -501,13 +537,13 @@ class TelegramBot extends EventEmitter {
     }
 
     const opts = {
-      qs: options,
+      qs: options
     };
     opts.qs.url = url;
 
     if (cert) {
       try {
-        const sendData = this._formatSendData('certificate', cert, fileOptions);
+        const sendData = this._formatSendData("certificate", cert, fileOptions);
         opts.formData = sendData[0];
         opts.qs.certificate = sendData[1];
       } catch (ex) {
@@ -515,7 +551,7 @@ class TelegramBot extends EventEmitter {
       }
     }
 
-    return this._request('setWebHook', opts);
+    return this._request("setWebHook", opts);
   }
 
   /**
@@ -526,7 +562,7 @@ class TelegramBot extends EventEmitter {
    * @see https://core.telegram.org/bots/api#deletewebhook
    */
   deleteWebHook(form = {}) {
-    return this._request('deleteWebhook', { form });
+    return this._request("deleteWebhook", { form });
   }
 
   /**
@@ -539,7 +575,7 @@ class TelegramBot extends EventEmitter {
    * @see https://core.telegram.org/bots/api#getwebhookinfo
    */
   getWebHookInfo(form = {}) {
-    return this._request('getWebhookInfo', { form });
+    return this._request("getWebhookInfo", { form });
   }
 
   /**
@@ -555,18 +591,20 @@ class TelegramBot extends EventEmitter {
     /* The older method signature was getUpdates(timeout, limit, offset).
      * We need to ensure backwards-compatibility while maintaining
      * consistency of the method signatures throughout the library */
-    if (typeof form !== 'object') {
+    if (typeof form !== "object") {
       /* eslint-disable no-param-reassign, prefer-rest-params */
-      deprecate('The method signature getUpdates(timeout, limit, offset) has been deprecated since v0.25.0');
+      deprecate(
+        "The method signature getUpdates(timeout, limit, offset) has been deprecated since v0.25.0"
+      );
       form = {
         timeout: arguments[0],
         limit: arguments[1],
-        offset: arguments[2],
+        offset: arguments[2]
       };
       /* eslint-enable no-param-reassign, prefer-rest-params */
     }
 
-    return this._request('getUpdates', { form });
+    return this._request("getUpdates", { form });
   }
 
   /**
@@ -577,7 +615,7 @@ class TelegramBot extends EventEmitter {
    * @see https://core.telegram.org/bots/api#update
    */
   processUpdate(update) {
-    debug('Process Update %j', update);
+    debug("Process Update %j", update);
     const message = update.message;
     const editedMessage = update.edited_message;
     const channelPost = update.channel_post;
@@ -590,27 +628,27 @@ class TelegramBot extends EventEmitter {
     const poll = update.poll;
 
     if (message) {
-      debug('Process Update message %j', message);
+      debug("Process Update message %j", message);
       const metadata = {};
-      metadata.type = TelegramBot.messageTypes.find((messageType) => {
+      metadata.type = TelegramBot.messageTypes.find(messageType => {
         return message[messageType];
       });
-      this.emit('message', message, metadata);
+      this.emit("message", message, metadata);
       if (metadata.type) {
-        debug('Emitting %s: %j', metadata.type, message);
+        debug("Emitting %s: %j", metadata.type, message);
         this.emit(metadata.type, message, metadata);
       }
       if (message.text) {
-        debug('Text message');
+        debug("Text message");
         this._textRegexpCallbacks.some(reg => {
-          debug('Matching %s with %s', message.text, reg.regexp);
+          debug("Matching %s with %s", message.text, reg.regexp);
           const result = reg.regexp.exec(message.text);
           if (!result) {
             return false;
           }
           // reset index so we start at the beginning of the regex each time
           reg.regexp.lastIndex = 0;
-          debug('Matches %s', reg.regexp);
+          debug("Matches %s", reg.regexp);
           reg.callback(message, result);
           // returning truthy value exits .some
           return this.options.onlyFirstMatch;
@@ -630,44 +668,44 @@ class TelegramBot extends EventEmitter {
         });
       }
     } else if (editedMessage) {
-      debug('Process Update edited_message %j', editedMessage);
-      this.emit('edited_message', editedMessage);
+      debug("Process Update edited_message %j", editedMessage);
+      this.emit("edited_message", editedMessage);
       if (editedMessage.text) {
-        this.emit('edited_message_text', editedMessage);
+        this.emit("edited_message_text", editedMessage);
       }
       if (editedMessage.caption) {
-        this.emit('edited_message_caption', editedMessage);
+        this.emit("edited_message_caption", editedMessage);
       }
     } else if (channelPost) {
-      debug('Process Update channel_post %j', channelPost);
-      this.emit('channel_post', channelPost);
+      debug("Process Update channel_post %j", channelPost);
+      this.emit("channel_post", channelPost);
     } else if (editedChannelPost) {
-      debug('Process Update edited_channel_post %j', editedChannelPost);
-      this.emit('edited_channel_post', editedChannelPost);
+      debug("Process Update edited_channel_post %j", editedChannelPost);
+      this.emit("edited_channel_post", editedChannelPost);
       if (editedChannelPost.text) {
-        this.emit('edited_channel_post_text', editedChannelPost);
+        this.emit("edited_channel_post_text", editedChannelPost);
       }
       if (editedChannelPost.caption) {
-        this.emit('edited_channel_post_caption', editedChannelPost);
+        this.emit("edited_channel_post_caption", editedChannelPost);
       }
     } else if (inlineQuery) {
-      debug('Process Update inline_query %j', inlineQuery);
-      this.emit('inline_query', inlineQuery);
+      debug("Process Update inline_query %j", inlineQuery);
+      this.emit("inline_query", inlineQuery);
     } else if (chosenInlineResult) {
-      debug('Process Update chosen_inline_result %j', chosenInlineResult);
-      this.emit('chosen_inline_result', chosenInlineResult);
+      debug("Process Update chosen_inline_result %j", chosenInlineResult);
+      this.emit("chosen_inline_result", chosenInlineResult);
     } else if (callbackQuery) {
-      debug('Process Update callback_query %j', callbackQuery);
-      this.emit('callback_query', callbackQuery);
+      debug("Process Update callback_query %j", callbackQuery);
+      this.emit("callback_query", callbackQuery);
     } else if (shippingQuery) {
-      debug('Process Update shipping_query %j', shippingQuery);
-      this.emit('shipping_query', shippingQuery);
+      debug("Process Update shipping_query %j", shippingQuery);
+      this.emit("shipping_query", shippingQuery);
     } else if (preCheckoutQuery) {
-      debug('Process Update pre_checkout_query %j', preCheckoutQuery);
-      this.emit('pre_checkout_query', preCheckoutQuery);
+      debug("Process Update pre_checkout_query %j", preCheckoutQuery);
+      this.emit("pre_checkout_query", preCheckoutQuery);
     } else if (poll) {
-      debug('Process Update poll %j', poll);
-      this.emit('poll', poll);
+      debug("Process Update poll %j", poll);
+      this.emit("poll", poll);
     }
   }
 
@@ -682,7 +720,7 @@ class TelegramBot extends EventEmitter {
   sendMessage(chatId, text, form = {}) {
     form.chat_id = chatId;
     form.text = text;
-    return this._request('sendMessage', { form });
+    return this._request("sendMessage", { form });
   }
 
   /**
@@ -696,7 +734,7 @@ class TelegramBot extends EventEmitter {
   answerInlineQuery(inlineQueryId, results, form = {}) {
     form.inline_query_id = inlineQueryId;
     form.results = stringify(results);
-    return this._request('answerInlineQuery', { form });
+    return this._request("answerInlineQuery", { form });
   }
 
   /**
@@ -712,7 +750,7 @@ class TelegramBot extends EventEmitter {
     form.chat_id = chatId;
     form.from_chat_id = fromChatId;
     form.message_id = messageId;
-    return this._request('forwardMessage', { form });
+    return this._request("forwardMessage", { form });
   }
 
   /**
@@ -728,17 +766,17 @@ class TelegramBot extends EventEmitter {
    */
   sendPhoto(chatId, photo, options = {}, fileOptions = {}) {
     const opts = {
-      qs: options,
+      qs: options
     };
     opts.qs.chat_id = chatId;
     try {
-      const sendData = this._formatSendData('photo', photo, fileOptions);
+      const sendData = this._formatSendData("photo", photo, fileOptions);
       opts.formData = sendData[0];
       opts.qs.photo = sendData[1];
     } catch (ex) {
       return Promise.reject(ex);
     }
-    return this._request('sendPhoto', opts);
+    return this._request("sendPhoto", opts);
   }
 
   /**
@@ -758,13 +796,13 @@ class TelegramBot extends EventEmitter {
     };
     opts.qs.chat_id = chatId;
     try {
-      const sendData = this._formatSendData('audio', audio, fileOptions);
+      const sendData = this._formatSendData("audio", audio, fileOptions);
       opts.formData = sendData[0];
       opts.qs.audio = sendData[1];
     } catch (ex) {
       return Promise.reject(ex);
     }
-    return this._request('sendAudio', opts);
+    return this._request("sendAudio", opts);
   }
 
   /**
@@ -784,13 +822,13 @@ class TelegramBot extends EventEmitter {
     };
     opts.qs.chat_id = chatId;
     try {
-      const sendData = this._formatSendData('document', doc, fileOptions);
+      const sendData = this._formatSendData("document", doc, fileOptions);
       opts.formData = sendData[0];
       opts.qs.document = sendData[1];
     } catch (ex) {
       return Promise.reject(ex);
     }
-    return this._request('sendDocument', opts);
+    return this._request("sendDocument", opts);
   }
 
   /**
@@ -809,13 +847,13 @@ class TelegramBot extends EventEmitter {
     };
     opts.qs.chat_id = chatId;
     try {
-      const sendData = this._formatSendData('sticker', sticker, fileOptions);
+      const sendData = this._formatSendData("sticker", sticker, fileOptions);
       opts.formData = sendData[0];
       opts.qs.sticker = sendData[1];
     } catch (ex) {
       return Promise.reject(ex);
     }
-    return this._request('sendSticker', opts);
+    return this._request("sendSticker", opts);
   }
 
   /**
@@ -835,13 +873,13 @@ class TelegramBot extends EventEmitter {
     };
     opts.qs.chat_id = chatId;
     try {
-      const sendData = this._formatSendData('video', video, fileOptions);
+      const sendData = this._formatSendData("video", video, fileOptions);
       opts.formData = sendData[0];
       opts.qs.video = sendData[1];
     } catch (ex) {
       return Promise.reject(ex);
     }
-    return this._request('sendVideo', opts);
+    return this._request("sendVideo", opts);
   }
 
   /**
@@ -861,13 +899,17 @@ class TelegramBot extends EventEmitter {
     };
     opts.qs.chat_id = chatId;
     try {
-      const sendData = this._formatSendData('animation', animation, fileOptions);
+      const sendData = this._formatSendData(
+        "animation",
+        animation,
+        fileOptions
+      );
       opts.formData = sendData[0];
       opts.qs.document = sendData[1];
     } catch (ex) {
       return Promise.reject(ex);
     }
-    return this._request('sendAnimation', opts);
+    return this._request("sendAnimation", opts);
   }
 
   /**
@@ -888,13 +930,17 @@ class TelegramBot extends EventEmitter {
     };
     opts.qs.chat_id = chatId;
     try {
-      const sendData = this._formatSendData('video_note', videoNote, fileOptions);
+      const sendData = this._formatSendData(
+        "video_note",
+        videoNote,
+        fileOptions
+      );
       opts.formData = sendData[0];
       opts.qs.video_note = sendData[1];
     } catch (ex) {
       return Promise.reject(ex);
     }
-    return this._request('sendVideoNote', opts);
+    return this._request("sendVideoNote", opts);
   }
 
   /**
@@ -914,15 +960,14 @@ class TelegramBot extends EventEmitter {
     };
     opts.qs.chat_id = chatId;
     try {
-      const sendData = this._formatSendData('voice', voice, fileOptions);
+      const sendData = this._formatSendData("voice", voice, fileOptions);
       opts.formData = sendData[0];
       opts.qs.voice = sendData[1];
     } catch (ex) {
       return Promise.reject(ex);
     }
-    return this._request('sendVoice', opts);
+    return this._request("sendVoice", opts);
   }
-
 
   /**
    * Send chat action.
@@ -940,7 +985,7 @@ class TelegramBot extends EventEmitter {
   sendChatAction(chatId, action, form = {}) {
     form.chat_id = chatId;
     form.action = action;
-    return this._request('sendChatAction', { form });
+    return this._request("sendChatAction", { form });
   }
 
   /**
@@ -959,7 +1004,7 @@ class TelegramBot extends EventEmitter {
   kickChatMember(chatId, userId, form = {}) {
     form.chat_id = chatId;
     form.user_id = userId;
-    return this._request('kickChatMember', { form });
+    return this._request("kickChatMember", { form });
   }
 
   /**
@@ -977,7 +1022,7 @@ class TelegramBot extends EventEmitter {
   unbanChatMember(chatId, userId, form = {}) {
     form.chat_id = chatId;
     form.user_id = userId;
-    return this._request('unbanChatMember', { form });
+    return this._request("unbanChatMember", { form });
   }
 
   /**
@@ -995,7 +1040,7 @@ class TelegramBot extends EventEmitter {
   restrictChatMember(chatId, userId, form = {}) {
     form.chat_id = chatId;
     form.user_id = userId;
-    return this._request('restrictChatMember', { form });
+    return this._request("restrictChatMember", { form });
   }
 
   /**
@@ -1013,7 +1058,7 @@ class TelegramBot extends EventEmitter {
   promoteChatMember(chatId, userId, form = {}) {
     form.chat_id = chatId;
     form.user_id = userId;
-    return this._request('promoteChatMember', { form });
+    return this._request("promoteChatMember", { form });
   }
 
   /**
@@ -1028,7 +1073,7 @@ class TelegramBot extends EventEmitter {
    */
   exportChatInviteLink(chatId, form = {}) {
     form.chat_id = chatId;
-    return this._request('exportChatInviteLink', { form });
+    return this._request("exportChatInviteLink", { form });
   }
 
   /**
@@ -1045,17 +1090,17 @@ class TelegramBot extends EventEmitter {
    */
   setChatPhoto(chatId, photo, options = {}, fileOptions = {}) {
     const opts = {
-      qs: options,
+      qs: options
     };
     opts.qs.chat_id = chatId;
     try {
-      const sendData = this._formatSendData('photo', photo, fileOptions);
+      const sendData = this._formatSendData("photo", photo, fileOptions);
       opts.formData = sendData[0];
       opts.qs.photo = sendData[1];
     } catch (ex) {
       return Promise.reject(ex);
     }
-    return this._request('setChatPhoto', opts);
+    return this._request("setChatPhoto", opts);
   }
 
   /**
@@ -1070,7 +1115,7 @@ class TelegramBot extends EventEmitter {
    */
   deleteChatPhoto(chatId, form = {}) {
     form.chat_id = chatId;
-    return this._request('deleteChatPhoto', { form });
+    return this._request("deleteChatPhoto", { form });
   }
 
   /**
@@ -1087,7 +1132,7 @@ class TelegramBot extends EventEmitter {
   setChatTitle(chatId, title, form = {}) {
     form.chat_id = chatId;
     form.title = title;
-    return this._request('setChatTitle', { form });
+    return this._request("setChatTitle", { form });
   }
 
   /**
@@ -1104,7 +1149,7 @@ class TelegramBot extends EventEmitter {
   setChatDescription(chatId, description, form = {}) {
     form.chat_id = chatId;
     form.description = description;
-    return this._request('setChatDescription', { form });
+    return this._request("setChatDescription", { form });
   }
 
   /**
@@ -1121,7 +1166,7 @@ class TelegramBot extends EventEmitter {
   pinChatMessage(chatId, messageId, form = {}) {
     form.chat_id = chatId;
     form.message_id = messageId;
-    return this._request('pinChatMessage', { form });
+    return this._request("pinChatMessage", { form });
   }
 
   /**
@@ -1136,7 +1181,7 @@ class TelegramBot extends EventEmitter {
    */
   unpinChatMessage(chatId, form = {}) {
     form.chat_id = chatId;
-    return this._request('unpinChatMessage', { form });
+    return this._request("unpinChatMessage", { form });
   }
 
   /**
@@ -1157,28 +1202,32 @@ class TelegramBot extends EventEmitter {
     /* The older method signature (in/before v0.27.1) was answerCallbackQuery(callbackQueryId, text, showAlert).
      * We need to ensure backwards-compatibility while maintaining
      * consistency of the method signatures throughout the library */
-    if (typeof form !== 'object') {
+    if (typeof form !== "object") {
       /* eslint-disable no-param-reassign, prefer-rest-params */
-      deprecate('The method signature answerCallbackQuery(callbackQueryId, text, showAlert) has been deprecated since v0.27.1');
+      deprecate(
+        "The method signature answerCallbackQuery(callbackQueryId, text, showAlert) has been deprecated since v0.27.1"
+      );
       form = {
         callback_query_id: arguments[0],
         text: arguments[1],
-        show_alert: arguments[2],
+        show_alert: arguments[2]
       };
       /* eslint-enable no-param-reassign, prefer-rest-params */
     }
     /* The older method signature (in/before v0.29.0) was answerCallbackQuery([options]).
      * We need to ensure backwards-compatibility while maintaining
      * consistency of the method signatures throughout the library. */
-    if (typeof callbackQueryId === 'object') {
+    if (typeof callbackQueryId === "object") {
       /* eslint-disable no-param-reassign, prefer-rest-params */
-      deprecate('The method signature answerCallbackQuery([options]) has been deprecated since v0.29.0');
+      deprecate(
+        "The method signature answerCallbackQuery([options]) has been deprecated since v0.29.0"
+      );
       form = callbackQueryId;
       /* eslint-enable no-param-reassign, prefer-rest-params */
     } else {
       form.callback_query_id = callbackQueryId;
     }
-    return this._request('answerCallbackQuery', { form });
+    return this._request("answerCallbackQuery", { form });
   }
 
   /**
@@ -1196,7 +1245,7 @@ class TelegramBot extends EventEmitter {
    */
   editMessageText(text, form = {}) {
     form.text = text;
-    return this._request('editMessageText', { form });
+    return this._request("editMessageText", { form });
   }
 
   /**
@@ -1214,7 +1263,7 @@ class TelegramBot extends EventEmitter {
    */
   editMessageCaption(caption, form = {}) {
     form.caption = caption;
-    return this._request('editMessageCaption', { form });
+    return this._request("editMessageCaption", { form });
   }
 
   /**
@@ -1234,7 +1283,7 @@ class TelegramBot extends EventEmitter {
    */
   editMessageMedia(media, form = {}) {
     form.media = stringify(media);
-    return this._request('editMessageMedia', { form });
+    return this._request("editMessageMedia", { form });
   }
 
   /**
@@ -1252,7 +1301,7 @@ class TelegramBot extends EventEmitter {
    */
   editMessageReplyMarkup(replyMarkup, form = {}) {
     form.reply_markup = replyMarkup;
-    return this._request('editMessageReplyMarkup', { form });
+    return this._request("editMessageReplyMarkup", { form });
   }
 
   /**
@@ -1270,17 +1319,19 @@ class TelegramBot extends EventEmitter {
     /* The older method signature was getUserProfilePhotos(userId, offset, limit).
      * We need to ensure backwards-compatibility while maintaining
      * consistency of the method signatures throughout the library */
-    if (typeof form !== 'object') {
+    if (typeof form !== "object") {
       /* eslint-disable no-param-reassign, prefer-rest-params */
-      deprecate('The method signature getUserProfilePhotos(userId, offset, limit) has been deprecated since v0.25.0');
+      deprecate(
+        "The method signature getUserProfilePhotos(userId, offset, limit) has been deprecated since v0.25.0"
+      );
       form = {
         offset: arguments[1],
-        limit: arguments[2],
+        limit: arguments[2]
       };
       /* eslint-enable no-param-reassign, prefer-rest-params */
     }
     form.user_id = userId;
-    return this._request('getUserProfilePhotos', { form });
+    return this._request("getUserProfilePhotos", { form });
   }
 
   /**
@@ -1298,7 +1349,7 @@ class TelegramBot extends EventEmitter {
     form.chat_id = chatId;
     form.latitude = latitude;
     form.longitude = longitude;
-    return this._request('sendLocation', { form });
+    return this._request("sendLocation", { form });
   }
 
   /**
@@ -1317,7 +1368,7 @@ class TelegramBot extends EventEmitter {
   editMessageLiveLocation(latitude, longitude, form = {}) {
     form.latitude = latitude;
     form.longitude = longitude;
-    return this._request('editMessageLiveLocation', { form });
+    return this._request("editMessageLiveLocation", { form });
   }
 
   /**
@@ -1332,7 +1383,7 @@ class TelegramBot extends EventEmitter {
    * @see https://core.telegram.org/bots/api#stopmessagelivelocation
    */
   stopMessageLiveLocation(form = {}) {
-    return this._request('stopMessageLiveLocation', { form });
+    return this._request("stopMessageLiveLocation", { form });
   }
 
   /**
@@ -1354,7 +1405,7 @@ class TelegramBot extends EventEmitter {
     form.longitude = longitude;
     form.title = title;
     form.address = address;
-    return this._request('sendVenue', { form });
+    return this._request("sendVenue", { form });
   }
 
   /**
@@ -1372,7 +1423,7 @@ class TelegramBot extends EventEmitter {
     form.chat_id = chatId;
     form.phone_number = phoneNumber;
     form.first_name = firstName;
-    return this._request('sendContact', { form });
+    return this._request("sendContact", { form });
   }
 
   /**
@@ -1390,7 +1441,7 @@ class TelegramBot extends EventEmitter {
     form.chat_id = chatId;
     form.question = question;
     form.options = stringify(pollOptions);
-    return this._request('sendPoll', { form });
+    return this._request("sendPoll", { form });
   }
 
   /**
@@ -1406,7 +1457,7 @@ class TelegramBot extends EventEmitter {
   stopPoll(chatId, pollId, form = {}) {
     form.chat_id = chatId;
     form.message_id = pollId;
-    return this._request('stopPoll', { form });
+    return this._request("stopPoll", { form });
   }
 
   /**
@@ -1421,7 +1472,7 @@ class TelegramBot extends EventEmitter {
    */
   getFile(fileId, form = {}) {
     form.file_id = fileId;
-    return this._request('getFile', { form });
+    return this._request("getFile", { form });
   }
 
   /**
@@ -1438,8 +1489,10 @@ class TelegramBot extends EventEmitter {
    * @see https://core.telegram.org/bots/api#getfile
    */
   getFileLink(fileId, form = {}) {
-    return this.getFile(fileId, form)
-      .then(resp => `${this.options.baseApiUrl}/file/bot${this.token}/${resp.file_path}`);
+    return this.getFile(fileId, form).then(
+      resp =>
+        `${this.options.baseApiUrl}/file/bot${this.token}/${resp.file_path}`
+    );
   }
 
   /**
@@ -1461,14 +1514,14 @@ class TelegramBot extends EventEmitter {
     const fileStream = new stream.PassThrough();
     fileStream.path = fileId;
     this.getFileLink(fileId, form)
-      .then((fileURI) => {
-        fileStream.emit('info', {
-          uri: fileURI,
+      .then(fileURI => {
+        fileStream.emit("info", {
+          uri: fileURI
         });
         pump(streamedRequest({ uri: fileURI }), fileStream);
       })
-      .catch((error) => {
-        fileStream.emit('error', error);
+      .catch(error => {
+        fileStream.emit("error", error);
       });
     return fileStream;
   }
@@ -1492,12 +1545,14 @@ class TelegramBot extends EventEmitter {
       reject = b;
     });
     const fileStream = this.getFileStream(fileId, form);
-    fileStream.on('info', (info) => {
-      const fileName = info.uri.slice(info.uri.lastIndexOf('/') + 1);
+    fileStream.on("info", info => {
+      const fileName = info.uri.slice(info.uri.lastIndexOf("/") + 1);
       // TODO: Ensure fileName doesn't contains slashes
       const filePath = path.join(downloadDir, fileName);
-      pump(fileStream, fs.createWriteStream(filePath), (error) => {
-        if (error) { return reject(error); }
+      pump(fileStream, fs.createWriteStream(filePath), error => {
+        if (error) {
+          return reject(error);
+        }
         return resolve(filePath);
       });
     });
@@ -1522,7 +1577,7 @@ class TelegramBot extends EventEmitter {
    *   properties. If not found, returns `null`.
    */
   removeTextListener(regexp) {
-    const index = this._textRegexpCallbacks.findIndex((textListener) => {
+    const index = this._textRegexpCallbacks.findIndex(textListener => {
       return textListener.regexp === regexp;
     });
     if (index === -1) {
@@ -1558,7 +1613,7 @@ class TelegramBot extends EventEmitter {
    *   properties. If not found, returns `null`.
    */
   removeReplyListener(replyListenerId) {
-    const index = this._replyListeners.findIndex((replyListener) => {
+    const index = this._replyListeners.findIndex(replyListener => {
       return replyListener.id === replyListenerId;
     });
     if (index === -1) {
@@ -1578,7 +1633,7 @@ class TelegramBot extends EventEmitter {
    */
   getChat(chatId, form = {}) {
     form.chat_id = chatId;
-    return this._request('getChat', { form });
+    return this._request("getChat", { form });
   }
 
   /**
@@ -1590,7 +1645,7 @@ class TelegramBot extends EventEmitter {
    */
   getChatAdministrators(chatId, form = {}) {
     form.chat_id = chatId;
-    return this._request('getChatAdministrators', { form });
+    return this._request("getChatAdministrators", { form });
   }
 
   /**
@@ -1602,7 +1657,7 @@ class TelegramBot extends EventEmitter {
    */
   getChatMembersCount(chatId, form = {}) {
     form.chat_id = chatId;
-    return this._request('getChatMembersCount', { form });
+    return this._request("getChatMembersCount", { form });
   }
 
   /**
@@ -1616,7 +1671,7 @@ class TelegramBot extends EventEmitter {
   getChatMember(chatId, userId, form = {}) {
     form.chat_id = chatId;
     form.user_id = userId;
-    return this._request('getChatMember', { form });
+    return this._request("getChatMember", { form });
   }
 
   /**
@@ -1628,7 +1683,7 @@ class TelegramBot extends EventEmitter {
    */
   leaveChat(chatId, form = {}) {
     form.chat_id = chatId;
-    return this._request('leaveChat', { form });
+    return this._request("leaveChat", { form });
   }
 
   /**
@@ -1642,7 +1697,7 @@ class TelegramBot extends EventEmitter {
   setChatStickerSet(chatId, stickerSetName, form = {}) {
     form.chat_id = chatId;
     form.sticker_set_name = stickerSetName;
-    return this._request('setChatStickerSet', { form });
+    return this._request("setChatStickerSet", { form });
   }
 
   /**
@@ -1654,7 +1709,7 @@ class TelegramBot extends EventEmitter {
    */
   deleteChatStickerSet(chatId, form = {}) {
     form.chat_id = chatId;
-    return this._request('deleteChatStickerSet', { form });
+    return this._request("deleteChatStickerSet", { form });
   }
 
   /**
@@ -1668,7 +1723,7 @@ class TelegramBot extends EventEmitter {
   sendGame(chatId, gameShortName, form = {}) {
     form.chat_id = chatId;
     form.game_short_name = gameShortName;
-    return this._request('sendGame', { form });
+    return this._request("sendGame", { form });
   }
 
   /**
@@ -1682,7 +1737,7 @@ class TelegramBot extends EventEmitter {
   setGameScore(userId, score, form = {}) {
     form.user_id = userId;
     form.score = score;
-    return this._request('setGameScore', { form });
+    return this._request("setGameScore", { form });
   }
 
   /**
@@ -1694,7 +1749,7 @@ class TelegramBot extends EventEmitter {
    */
   getGameHighScores(userId, form = {}) {
     form.user_id = userId;
-    return this._request('getGameHighScores', { form });
+    return this._request("getGameHighScores", { form });
   }
 
   /**
@@ -1708,7 +1763,7 @@ class TelegramBot extends EventEmitter {
   deleteMessage(chatId, messageId, form = {}) {
     form.chat_id = chatId;
     form.message_id = messageId;
-    return this._request('deleteMessage', { form });
+    return this._request("deleteMessage", { form });
   }
 
   /**
@@ -1727,7 +1782,17 @@ class TelegramBot extends EventEmitter {
    * @return {Promise}
    * @see https://core.telegram.org/bots/api#sendinvoice
    */
-  sendInvoice(chatId, title, description, payload, providerToken, startParameter, currency, prices, form = {}) {
+  sendInvoice(
+    chatId,
+    title,
+    description,
+    payload,
+    providerToken,
+    startParameter,
+    currency,
+    prices,
+    form = {}
+  ) {
     form.chat_id = chatId;
     form.title = title;
     form.description = description;
@@ -1737,7 +1802,7 @@ class TelegramBot extends EventEmitter {
     form.currency = currency;
     form.prices = stringify(prices);
     form.provider_data = stringify(form.provider_data);
-    return this._request('sendInvoice', { form });
+    return this._request("sendInvoice", { form });
   }
 
   /**
@@ -1754,7 +1819,7 @@ class TelegramBot extends EventEmitter {
     form.shipping_query_id = shippingQueryId;
     form.ok = ok;
     form.shipping_options = stringify(form.shipping_options);
-    return this._request('answerShippingQuery', { form });
+    return this._request("answerShippingQuery", { form });
   }
 
   /**
@@ -1770,7 +1835,7 @@ class TelegramBot extends EventEmitter {
   answerPreCheckoutQuery(preCheckoutQueryId, ok, form = {}) {
     form.pre_checkout_query_id = preCheckoutQueryId;
     form.ok = ok;
-    return this._request('answerPreCheckoutQuery', { form });
+    return this._request("answerPreCheckoutQuery", { form });
   }
 
   /**
@@ -1783,7 +1848,7 @@ class TelegramBot extends EventEmitter {
    */
   getStickerSet(name, form = {}) {
     form.name = name;
-    return this._request('getStickerSet', { form });
+    return this._request("getStickerSet", { form });
   }
 
   /**
@@ -1800,17 +1865,21 @@ class TelegramBot extends EventEmitter {
    */
   uploadStickerFile(userId, pngSticker, options = {}, fileOptions = {}) {
     const opts = {
-      qs: options,
+      qs: options
     };
     opts.qs.user_id = userId;
     try {
-      const sendData = this._formatSendData('png_sticker', pngSticker, fileOptions);
+      const sendData = this._formatSendData(
+        "png_sticker",
+        pngSticker,
+        fileOptions
+      );
       opts.formData = sendData[0];
       opts.qs.png_sticker = sendData[1];
     } catch (ex) {
       return Promise.reject(ex);
     }
-    return this._request('uploadStickerFile', opts);
+    return this._request("uploadStickerFile", opts);
   }
 
   /**
@@ -1830,9 +1899,17 @@ class TelegramBot extends EventEmitter {
    * @see https://core.telegram.org/bots/api#createnewstickerset
    * @todo Add tests for this method!
    */
-  createNewStickerSet(userId, name, title, pngSticker, emojis, options = {}, fileOptions = {}) {
+  createNewStickerSet(
+    userId,
+    name,
+    title,
+    pngSticker,
+    emojis,
+    options = {},
+    fileOptions = {}
+  ) {
     const opts = {
-      qs: options,
+      qs: options
     };
     opts.qs.user_id = userId;
     opts.qs.name = name;
@@ -1840,13 +1917,17 @@ class TelegramBot extends EventEmitter {
     opts.qs.emojis = emojis;
     opts.qs.mask_position = stringify(options.mask_position);
     try {
-      const sendData = this._formatSendData('png_sticker', pngSticker, fileOptions);
+      const sendData = this._formatSendData(
+        "png_sticker",
+        pngSticker,
+        fileOptions
+      );
       opts.formData = sendData[0];
       opts.qs.png_sticker = sendData[1];
     } catch (ex) {
       return Promise.reject(ex);
     }
-    return this._request('createNewStickerSet', opts);
+    return this._request("createNewStickerSet", opts);
   }
 
   /**
@@ -1864,22 +1945,33 @@ class TelegramBot extends EventEmitter {
    * @see https://core.telegram.org/bots/api#addstickertoset
    * @todo Add tests for this method!
    */
-  addStickerToSet(userId, name, pngSticker, emojis, options = {}, fileOptions = {}) {
+  addStickerToSet(
+    userId,
+    name,
+    pngSticker,
+    emojis,
+    options = {},
+    fileOptions = {}
+  ) {
     const opts = {
-      qs: options,
+      qs: options
     };
     opts.qs.user_id = userId;
     opts.qs.name = name;
     opts.qs.emojis = emojis;
     opts.qs.mask_position = stringify(options.mask_position);
     try {
-      const sendData = this._formatSendData('png_sticker', pngSticker, fileOptions);
+      const sendData = this._formatSendData(
+        "png_sticker",
+        pngSticker,
+        fileOptions
+      );
       opts.formData = sendData[0];
       opts.qs.png_sticker = sendData[1];
     } catch (ex) {
       return Promise.reject(ex);
     }
-    return this._request('addStickerToSet', opts);
+    return this._request("addStickerToSet", opts);
   }
 
   /**
@@ -1896,7 +1988,7 @@ class TelegramBot extends EventEmitter {
   setStickerPositionInSet(sticker, position, form = {}) {
     form.sticker = sticker;
     form.position = position;
-    return this._request('setStickerPositionInSet', { form });
+    return this._request("setStickerPositionInSet", { form });
   }
 
   /**
@@ -1911,7 +2003,7 @@ class TelegramBot extends EventEmitter {
    */
   deleteStickerFromSet(sticker, form = {}) {
     form.sticker = sticker;
-    return this._request('deleteStickerFromSet', { form });
+    return this._request("deleteStickerFromSet", { form });
   }
 
   /**
@@ -1931,7 +2023,7 @@ class TelegramBot extends EventEmitter {
    */
   sendMediaGroup(chatId, media, options = {}) {
     const opts = {
-      qs: options,
+      qs: options
     };
     opts.qs.chat_id = chatId;
 
@@ -1944,7 +2036,11 @@ class TelegramBot extends EventEmitter {
       delete payload.fileOptions;
       try {
         const attachName = String(index);
-        const [formData, fileId] = this._formatSendData(attachName, input.media, input.fileOptions);
+        const [formData, fileId] = this._formatSendData(
+          attachName,
+          input.media,
+          input.fileOptions
+        );
         if (formData) {
           opts.formData[attachName] = formData[attachName];
           payload.media = `attach://${attachName}`;
@@ -1959,7 +2055,7 @@ class TelegramBot extends EventEmitter {
     }
     opts.qs.media = JSON.stringify(inputMedia);
 
-    return this._request('sendMediaGroup', opts);
+    return this._request("sendMediaGroup", opts);
   }
 }
 
